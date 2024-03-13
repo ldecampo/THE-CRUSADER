@@ -17,7 +17,61 @@ client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
+
+client.on('channelPinsUpdate', async function (channel, time) {
+    let pinLog = require("./pins.json");
+
+    // Fetch pinned messages
+    let messages = await channel.messages.fetchPinned();
+    let lastPinned = messages.first(); // Get the last pinned message
+
+    let shouldLog = true; // Assuming you want to log new pinned messages by default
+    if (pinLog.pins.includes(lastPinned.url)) {
+        shouldLog = false; // If message ID is already in pinLog, don't log it again
+    }
+
+    if (shouldLog) {
+        pinLog.pins.push(lastPinned.url);
+
+        // Write updated pinLog back to pins.json
+        require("fs").writeFileSync("./pins.json", JSON.stringify(pinLog));
+        
+
+        let messageContent = "<@" + lastPinned.author.id + ">'s message pinned! " + lastPinned.url + "\n>>> " + lastPinned.content;
+
+        client.channels.fetch(secrets.pinID).then(channel => {
+            channel.send(messageContent).then(() => {
+                console.log("Regular message sent successfully.");
+    
+                // Send URLs for each attachment in a separate message
+                Array.from(lastPinned.attachments.values()).forEach(attachment => {
+                    channel.send(attachment.url).then(() => {
+                        console.log("Attachment URL sent successfully.");
+                    }).catch(error => {
+                        console.error("Error sending attachment URL:", error);
+                    });
+                });
+            });
+        });
+    }
+});
+
+
+
 client.on("messageCreate", (message) => {
+
+    
+
+    //Check if it contains a discord invite
+    if (message.content.includes("discord.gg")) {
+        if (message.author != 1095366459191984198) {
+            message.reply('Invite link detected, deleting...');
+            message.delete();
+            client.channels.fetch(secrets.logID).then(channel => {
+                channel.send(">>> " + "Deleted message from user <@" + message.author + "> due to discord invite." + "\n Message content: \"" + message.content + "\"");
+                })
+        }
+    }
 
     
 
@@ -94,28 +148,6 @@ client.on("messageCreate", (message) => {
           }
         }
     }
-
-    // if (unsafeWords.slurs.some(word => message.content.toLowerCase().includes(" " + word + " "))) {
-    //   message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&1095738454157041725> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES');
-    //       //message.member.timeout(10 * 60 * 1000, "Slur Detected.")
-    // }
-    // if (unsafeWords.timeOutTest.some(word => message.content.toLowerCase().includes(" " + word + " "))) {
-    //       message.reply('Successful test, attempting timeout...')
-    //       //message.member.timeout(10 * 60, "Timeout Test.")
-    // }
-    // if (unsafeWords.slurs.some(word => message.content.toLowerCase().includes(word))) {
-    //   message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> POSSIBLE SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&1095738454157041725> ENGAGE');
-    // }
-    // if (unsafeWords.test.some(word => message.content.toLowerCase().includes(" " + word + " "))) {
-    //   message.reply('Successful test.');
-    //   console.log("Message heard.")
-    // }
-    // if (unsafeWords.french.some(word => message.content.toLowerCase().includes(" " + word + " "))) {
-    //       let rand = Math.floor(Math.random() * 10);
-    //       if (rand == 3) { 
-    //       message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n KNIGHTS ENGAGE');
-    //       }
-    // }
 });
 
   
