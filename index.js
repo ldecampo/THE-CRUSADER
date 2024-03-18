@@ -1,6 +1,9 @@
 // Require the necessary discord.js classes
+const fs = require('node:fs');
+const path = require('node:path');
 
-const { Client, Events, GatewayIntentBits } = require('discord.js');
+
+const { Client, Events, Collection, GatewayIntentBits } = require('discord.js');
 const { token } = require('./config.json');
 
 let secrets = require('./config.json');
@@ -8,6 +11,27 @@ const unsafeWords = require('./slurs.json');
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+client.commands = new Collection();
+
+const foldersPath = path.join(__dirname, 'commands');
+const commandFolders = fs.readdirSync(foldersPath);
+
+for (const folder of commandFolders) {
+	const commandsPath = path.join(foldersPath, folder);
+	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+	for (const file of commandFiles) {
+		const filePath = path.join(commandsPath, file);
+		const command = require(filePath);
+		// Set a new item in the Collection with the key as the command name and the value as the exported module
+		if ('data' in command && 'execute' in command) {
+			client.commands.set(command.data.name, command);
+		} else {
+			console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+		}
+	}
+}
+
 
 
 // When the client is ready, run this code (only once).
@@ -17,29 +41,54 @@ client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
+//Handle slash commands
+client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isChatInputCommand()) return;
+	console.log(interaction);
+
+    const command = interaction.client.commands.get(interaction.commandName);
+
+	if (!command) {
+		console.error(`No command matching ${interaction.commandName} was found.`);
+		return;
+	}
+
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		if (interaction.replied || interaction.deferred) {
+			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+		} else {
+			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		}
+	}
+
+});
+
 
 client.on('channelPinsUpdate', async function (channel, time) {
-    let pinLog = require("./pins.json");
+    let info = require("./guilds/" + channel.guild.id + ".json");
 
     // Fetch pinned messages
     let messages = await channel.messages.fetchPinned();
     let lastPinned = messages.first(); // Get the last pinned message
 
     let shouldLog = true; // Assuming you want to log new pinned messages by default
-    if (pinLog.pins.includes(lastPinned.url)) {
+    if (info.pins.includes(lastPinned.url)) {
         shouldLog = false; // If message ID is already in pinLog, don't log it again
     }
 
     if (shouldLog) {
-        pinLog.pins.push(lastPinned.url);
+        info.pins.push(lastPinned.url);
 
         // Write updated pinLog back to pins.json
-        require("fs").writeFileSync("./pins.json", JSON.stringify(pinLog));
+        require("fs").writeFileSync("./pins.json", JSON.stringify(info));
         
 
         let messageContent = "<@" + lastPinned.author.id + ">'s message pinned! " + lastPinned.url + "\n>>> " + lastPinned.content;
 
-        client.channels.fetch(secrets.pinID).then(channel => {
+        client.channels.fetch(info.pinID).then(channel => {
             channel.send(messageContent).then(() => {
                 console.log("Regular message sent successfully.");
     
@@ -60,14 +109,14 @@ client.on('channelPinsUpdate', async function (channel, time) {
 
 client.on("messageCreate", (message) => {
 
-    
+    let info = require("./guilds/" + message.guild.id + ".json");
 
     //Check if it contains a discord invite
     if (message.content.includes("discord.gg")) {
         if (message.author != 1095366459191984198) {
             message.reply('Invite link detected, deleting...');
             message.delete();
-            client.channels.fetch(secrets.logID).then(channel => {
+            client.channels.fetch(info.logID).then(channel => {
                 channel.send(">>> " + "Deleted message from user <@" + message.author + "> due to discord invite." + "\n Message content: \"" + message.content + "\"");
                 })
         }
@@ -100,7 +149,7 @@ client.on("messageCreate", (message) => {
                             member.timeout(600000,'Slur Detected')
                                 .then(() => {
                                     console.log('Timed user out for 10 minutes.');
-                                    client.channels.fetch(secrets.logID).then(channel => {
+                                    client.channels.fetch(info.logID).then(channel => {
                                     channel.send(">>> " + "Timed out user <@" + message.author + "> for ten minutes due to slur at " + message.url + "\n Message content: \"" + message.content + "\"");
                                     })
                                 })
@@ -124,7 +173,7 @@ client.on("messageCreate", (message) => {
                 member.timeout(600000,'Slur Detected')
                     .then(() => {
                         console.log('Timed user out for 10 minutes.');
-                        client.channels.fetch(secrets.logID).then(channel => {
+                        client.channels.fetch(info.logID).then(channel => {
                         channel.send(">>> " + "Timed out user <@" + message.author + "> for ten minutes due to test at " + message.url + "\n Message content: \"" + message.content + "\"");
                         })
                     })
