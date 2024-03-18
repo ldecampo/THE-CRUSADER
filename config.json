@@ -1,7 +1,4 @@
 {
     "token": "<token>",
-    "clientId": "<clientid>",
-    "guildId": "<guildid>",
-    "logID": "<logid>",
-    "pinID": <pinID>
+    "clientId": "<clientid>"
 }
