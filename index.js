@@ -141,16 +141,16 @@ client.on("messageCreate", (message) => {
             break
         }
         if (message.content.toLowerCase().includes(word)) {
-            message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&1095738454157041725> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES');
+            message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&' + info.roleID + '> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES');
                         //Attempt timeout
                         message.guild.members.fetch(message.author)
                         .then(member => {
                             // Use the guild member timeout method
-                            member.timeout(600000,'Slur Detected')
+                            member.timeout(info.timeoutTime,'Slur Detected')
                                 .then(() => {
-                                    console.log('Timed user out for 10 minutes.');
+                                    console.log('Timed user out.');
                                     client.channels.fetch(info.logID).then(channel => {
-                                    channel.send(">>> " + "Timed out user <@" + message.author + "> for ten minutes due to slur at " + message.url + "\n Message content: \"" + message.content + "\"");
+                                    channel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to slur at " + message.url + "\n Message content: \"" + message.content + "\"");
                                     })
                                 })
                                 .catch(console.error);
@@ -170,11 +170,11 @@ client.on("messageCreate", (message) => {
             message.guild.members.fetch(message.author)
             .then(member => {
                 // Use the guild member timeout method
-                member.timeout(600000,'Slur Detected')
+                member.timeout(info.timeoutTime,'Slur Detected')
                     .then(() => {
-                        console.log('Timed user out for 10 minutes.');
+                        console.log('Timed user out.');
                         client.channels.fetch(info.logID).then(channel => {
-                        channel.send(">>> " + "Timed out user <@" + message.author + "> for ten minutes due to test at " + message.url + "\n Message content: \"" + message.content + "\"");
+                        channel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to test at " + message.url + "\n Message content: \"" + message.content + "\"");
                         })
                     })
                     .catch(console.error);
