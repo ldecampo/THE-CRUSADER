@@ -38,7 +38,7 @@ Navagate to the appropriate folder, and then start a new node project with `npm 
 
 Install discord.js to your new project, `npm install discord.js`.
 
-Then, import all the files from this repo. Edit the secrets.json and config.json files to include the appropriate information. Run `screen run-bot.js` to run the bot in a screen, so that you can close your terminal window. 
+Then, import all the files from this repo. Edit the secrets.json and config.json files to include the appropriate information. Run `screen node index.js` to run the bot in a screen, so that you can close your terminal window. 
 
 
 
