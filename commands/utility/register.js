@@ -16,6 +16,8 @@ module.exports = {
                     "guildId"  :  interaction.guild.id, 
                     "logID"   :  "", 
                     "pinID"      :  "",
+                    "roleID"     : "",
+                    "timeoutTime"       :  0,
                     "pins"      : examplePins,
                     }
                 
