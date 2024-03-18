@@ -1,0 +1,14 @@
+---This is an example file. The real name of this file would be <guildid>.json.---
+
+{
+  "guildId": "874021203566805003",
+  "logID": "980214961496285194",
+  "pinID": "1031780893221728276",
+  "pins": [
+    1, //1, 2, and 3 are included so that it's not an empty array.
+    2,
+    3,
+    "https://discord.com/channels/<guildID>/<channelID>/<messageID>",
+    "https://discord.com/channels/<guildID>/<channelID>/<messageID>"
+  ]
+}
