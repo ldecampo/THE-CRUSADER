@@ -18,6 +18,9 @@ module.exports = {
                     "pinID"      :  "",
                     "roleID"     : "",
                     "timeoutTime"       :  0,
+                    "welcomeUsers"      : false,
+                    "welcomeID"     : "",
+                    "welcomeSticker"    : "",
                     "pins"      : examplePins,
                     }
                 
