@@ -10,7 +10,7 @@ let secrets = require('./config.json');
 const unsafeWords = require('./slurs.json');
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions] });
 
 client.commands = new Collection();
 
@@ -106,13 +106,25 @@ client.on('channelPinsUpdate', async function (channel, time) {
         }
     } catch (error) {
         console.log(error)
+        const fs = require('fs');
+        const time = new Date().toISOString().replace(/:/g, '-'); // Generating a timestamp in a format suitable for file name
+        const filePath = `Crash/${time}.txt`;
+        const errorString = JSON.stringify(error, null, 2); // Stringify the error object with pretty formatting
+    
+        fs.writeFile(filePath, errorString, (err) => {
+            if (err) {
+                console.error('Error writing to crash file:', err);
+            } else {
+                console.log('Error logged to:', filePath);
+            }
+        });
     }
 });
 
 
 
 client.on("messageCreate", async (message) => {
-
+    
     try {
         let info = require("./guilds/" + message.guild.id + ".json");
         //Check if it contains a discord invite
@@ -152,8 +164,6 @@ client.on("messageCreate", async (message) => {
                 // message.delete();
             }
         }
-
-        
 
         //Check for test words
         for (let word of unsafeWords.test) {
@@ -240,7 +250,20 @@ client.on("messageCreate", async (message) => {
         }
     } catch (error) {
         console.log(error)
+        const fs = require('fs');
+        const time = new Date().toISOString().replace(/:/g, '-'); // Generating a timestamp in a format suitable for file name
+        const filePath = `Crash/${time}.txt`;
+        const errorString = JSON.stringify(error, null, 2); // Stringify the error object with pretty formatting
+    
+        fs.writeFile(filePath, errorString, (err) => {
+            if (err) {
+                console.error('Error writing to crash file:', err);
+            } else {
+                console.log('Error logged to:', filePath);
+            }
+        });
     }
+    
 });
 
 client.on('guildMemberAdd', (member) => {
@@ -256,7 +279,20 @@ client.on('guildMemberAdd', (member) => {
         }
     } catch (error) {
         console.log(error)
+        const fs = require('fs');
+        const time = new Date().toISOString().replace(/:/g, '-'); // Generating a timestamp in a format suitable for file name
+        const filePath = `Crash/${time}.txt`;
+        const errorString = JSON.stringify(error, null, 2); // Stringify the error object with pretty formatting
+    
+        fs.writeFile(filePath, errorString, (err) => {
+            if (err) {
+                console.error('Error writing to crash file:', err);
+            } else {
+                console.log('Error logged to:', filePath);
+            }
+        });
     }
+    
 });
 
   

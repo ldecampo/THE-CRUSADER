@@ -12,15 +12,19 @@ module.exports = {
         fs.access(filePath, fs.constants.F_OK, (err) => {
             if (err) {
                 var examplePins = [1, 2, 3]
+                var blacklistedChannels = []
                 var jsonArray = { 
                     "guildId"  :  interaction.guild.id, 
+                    "blacklistedIds" : blacklistedChannels,
                     "logID"   :  "", 
                     "pinID"      :  "",
                     "roleID"     : "",
+                    "baitID"    : "",
                     "timeoutTime"       :  0,
                     "welcomeUsers"      : false,
                     "welcomeID"     : "",
                     "welcomeSticker"    : "",
+                    "countingID"    : "",
                     "pins"      : examplePins,
                     }
                 
