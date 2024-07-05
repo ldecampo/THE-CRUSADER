@@ -17,7 +17,7 @@ module.exports = {
 
 		interaction.member.send("RESPECT.");
 		//One second * one minute * one hour * one day * one week
-		await delay(1000 * 60 );
+		await delay(1000 * 60 * 60 * 24 * 7);
 		dmRESPECT(100, interaction.member);
 		interaction.member.send("RESPECT.");
 	},
