@@ -245,7 +245,8 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-        if ((Math.floor(Math.random() * 1337)) == 256) {
+        
+        if ((Math.floor(Math.random() * 2674)) == 256) {
             message.reply('Message approved, thank you Citizen.');
         }
     } catch (error) {
