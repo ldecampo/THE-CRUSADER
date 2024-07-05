@@ -10,7 +10,16 @@ let secrets = require('./config.json');
 const unsafeWords = require('./slurs.json');
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions] });
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.DirectMessages
+    ],
+    partials: ['CHANNEL'] // Required to receive DMs
+});
 
 client.commands = new Collection();
 
