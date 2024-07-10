@@ -3,7 +3,7 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('respectful')
-		.setDescription('Respect'),
+		.setDescription('respect'),
 	async execute(interaction) {
 		try {
 			let delay = async (ms) => await new Promise(r => setTimeout(r, ms));
@@ -21,8 +21,7 @@ module.exports = {
 			//One second * one minute * one hour * one day * one week
 			await delay(1000 * 60 * 60 * 24 * 7);
 			console.log("Countdown complete, messaging...")
-			dmRESPECT(100, interaction.member);
-			interaction.member.send("RESPECT.");
+			interaction.member.send("<:RESPECTFUL:932004811723931698>");
 		}
 		catch (error) {
 			console.log(error);

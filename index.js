@@ -135,7 +135,11 @@ client.on('channelPinsUpdate', async function (channel, time) {
 client.on("messageCreate", async (message) => {
     
     try {
-        let info = require("./guilds/" + message.guild.id + ".json");
+        let info;
+        if (message.author != 1095366459191984198) {
+            info = require("./guilds/" + message.guildId + ".json");
+        }
+ 
         //Check if it contains a discord invite
         if (message.content.includes("discord.gg")) {
             console.log("<" + message.content + ">")
@@ -177,7 +181,7 @@ client.on("messageCreate", async (message) => {
         //Check for test words
         for (let word of unsafeWords.test) {
             if (message.author == 1095366459191984198) {
-                break
+                break;
             }
             if (message.content.toLowerCase().includes(word)) {
                 message.reply('Successful test.', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
@@ -188,7 +192,7 @@ client.on("messageCreate", async (message) => {
         //Check for slurs words
         for (let word of unsafeWords.slurs) {
             if (message.author == 1095366459191984198) {
-                break
+                break;
             }
             if (message.content.toLowerCase().includes(word)) {
                 message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&' + info.roleID + '> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
@@ -215,7 +219,7 @@ client.on("messageCreate", async (message) => {
         //Check for timeouttest words
         for (let word of unsafeWords.timeOutTest) {
             if (message.author == 1095366459191984198) {
-                break
+                break;
             }
             if (message.content.toLowerCase().includes(word)) {
                 message.reply('Successful test, attempting timeout...', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
@@ -244,7 +248,7 @@ client.on("messageCreate", async (message) => {
         //Check for french words
         for (let word of unsafeWords.french) {
             if (message.author == 1095366459191984198) {
-                break
+                break;
             }
             if (message.content.toLowerCase().includes(word)) {
                 let rand = Math.floor(Math.random() * 10);
