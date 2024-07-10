@@ -75,7 +75,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Failed to sudo the message:', error);
-            await interaction.reply('An error occurred while trying to send the message.', { ephemeral: true });
+            await interaction.member.send('An error occurred while trying to send the message.', { ephemeral: true });
         }
     },
 };
