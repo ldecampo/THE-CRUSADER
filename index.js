@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 
-const { Client, Events, Collection, GatewayIntentBits } = require('discord.js');
+const { Client, Events, Collection, GatewayIntentBits, ActivityType } = require('discord.js');
 const { token } = require('./config.json');
 
 let secrets = require('./config.json');
@@ -48,6 +48,11 @@ for (const folder of commandFolders) {
 // It makes some properties non-nullable.
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+    client.user.setPresence({
+        activities: [{ name: `im probably working fine`, type: ActivityType.Custom }],
+        status: 'online',
+      });
+
 });
 
 //Handle slash commands
