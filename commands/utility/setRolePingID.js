@@ -26,7 +26,7 @@ module.exports = {
 
             // Read JSON file
             let serverInfo = require(filePath); 
-            serverInfo.roleID = role;
+            serverInfo.knightRoleID = role;
 
             
             // Write JSON data back to file

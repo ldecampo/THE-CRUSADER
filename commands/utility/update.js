@@ -49,11 +49,35 @@ module.exports = {
                     var pinID = currInfo.pinID
                 }
 
-                //roleID
-                if (typeof currInfo.roleID === 'undefined' || currInfo.roleID === null) {
-                    var roleID = "";
+                //roleID -> knightRoleID 
+                if (!(typeof currInfo.knightRoleID === 'undefined' || currInfo.knightRoleID === null)) {
+                    var knightRoleID = knightRoleID
+                }
+                else if (typeof currInfo.roleID === 'undefined' || currInfo.roleID === null) {
+                    var knightRoleID = "";
                 } else {
-                    var roleID = currInfo.roleID
+                    var knightRoleID = currInfo.roleID
+                }
+
+                //userRoleID
+                if (typeof currInfo.userRoleID === 'undefined' || currInfo.userRoleID === null) {
+                    var userRoleID = "";
+                } else {
+                    var userRoleID = currInfo.userRoleID;
+                }
+
+                //antEMode
+                if (typeof currInfo.antEMode === 'undefined' || currInfo.antEMode === null) {
+                    var antEMode = "";
+                } else {
+                    var antEMode = currInfo.antEMode;
+                }
+
+                //antERoleID
+                if (typeof currInfo.antERoleID === 'undefined' || currInfo.antERoleID === null) {
+                    var antERoleID = "";
+                } else {
+                    var antERoleID = currInfo.antERoleID;
                 }
 
                 //baitID
@@ -98,6 +122,13 @@ module.exports = {
                     var countingID = currInfo.countingID
                 }
 
+                //welcomeQuestions
+                if (typeof currInfo.welcomeQuestions === 'undefined' || currInfo.welcomeQuestions === null) {
+                    var welcomeQuestions = ["What is 1+1", "Opinion on orphans?", "Tell me your favorite proof."];
+                } else {
+                    var welcomeQuestions = currInfo.welcomeQuestions
+                }
+                
                 //pins
                 if (typeof currInfo.pins === 'undefined' || currInfo.pins === null) {
                     var examplePins = [1, 2, 3];
@@ -110,13 +141,17 @@ module.exports = {
                     "blacklistedIds" : blacklistedChannels,
                     "logID"   :  logID, 
                     "pinID"      :  pinID,
-                    "roleID"     : roleID,
+                    "knightRoleID"     : knightRoleID,
+                    "userRoleID"    : userRoleID,
+                    "antEMode"      : antEMode,
+                    "antERoleID"    : antERoleID,
                     "baitID"    : baitID,
                     "timeoutTime"       :  timeoutTime,
                     "welcomeUsers"      : welcomeUsers,
                     "welcomeID"     : welcomeID,
                     "welcomeSticker"    : welcomeSticker,
                     "countingID"    : countingID,
+                    "welcomeQuestions"      : welcomeQuestions,
                     "pins"      : examplePins,
                     }
                 

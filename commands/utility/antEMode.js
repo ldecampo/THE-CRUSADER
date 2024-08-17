@@ -4,12 +4,12 @@ const fs = require('fs');
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('welcomeusers')
-		.setDescription('Enable/Disable welcoming.')
+		.setName('antemode')
+		.setDescription('Enable/Disable antE mode.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
 		.addBooleanOption(option =>
 			option.setName('truefalse')
-				.setDescription('Enable/Disable welcoming')
+				.setDescription('Enable/Disable antE mode')
 				.setRequired(true)),
 	async execute(interaction) {
 		const bool = interaction.options.getBoolean('truefalse');
@@ -22,14 +22,14 @@ module.exports = {
 
             // Read JSON file
             let serverInfo = require(filePath); 
-            serverInfo.welcomeUsers = bool;
+            serverInfo.antEMode = bool;
 
             
             // Write JSON data back to file
             fs.writeFileSync(filePath, JSON.stringify(serverInfo, null, 2)); // Pretty print JSON
 
             // Reply to interaction
-            interaction.reply("Welcoming Toggled");
+            interaction.reply("AntE Mode Toggled");
         } catch (Exception) {
             interaction.reply("Error toggling mode")
             console.log(Exception)
