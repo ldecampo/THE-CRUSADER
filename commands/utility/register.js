@@ -13,7 +13,7 @@ module.exports = {
             if (err) {
                 var examplePins = [1, 2, 3]
                 var blacklistedChannels = [] 
-                var exampleQuestions = ["What is 1+1", "Opinion on orphans?", "Tell me your favorite proof."]
+                var exampleQuestions = ["Prove that the square root of 2 is an irrational number, or that there are infinitely many primes.", "What is your least favorite imaginary number?", "Give an in-depth analysis about why proof by induction is a valid proof technique."]
                 var jsonArray = { 
                     "guildId"  :  interaction.guild.id, 
                     "blacklistedIds" : blacklistedChannels,

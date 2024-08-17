@@ -4,38 +4,40 @@ const fs = require('fs');
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('setrolepingid')
-		.setDescription('Set this role to be pung whenever a slur is detected. Requires the role ID.')
+		.setName('removewelcomequestion')
+		.setDescription('Removes a specific question from the list of welcoming questions.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-		.addStringOption(option =>
-			option.setName('id')
-				.setDescription('The role id')
+		.addIntegerOption(option =>
+			option.setName('questionnumber')
+				.setDescription('The number of the question to remove (see /catwelcomequestions)')
 				.setRequired(true)),
 	async execute(interaction) {
-        const role = interaction.options.getString('id');
-        console.log(role)
+        const index = interaction.options.getInteger('questionnumber');
+        console.log(index)
         try {
             const guildId = interaction.guild.id;
             const filePath = path.resolve(__dirname, `../../guilds/${guildId}.json`);
-            console.log(role)
 
-            // Check if role is valid
-            if (!role) {
-                return interaction.reply("Invalid role ID");
+            // Check if index is valid
+            if (!index) {
+                return interaction.reply("Invalid question");
+            }
+            if (index <= 2) {
+                return interaction.reply("Question number must be larger than 2.")
             }
 
             // Read JSON file
             let serverInfo = require(filePath); 
-            serverInfo.knightRoleID = role;
+            serverInfo.welcomeQuestions.splice(index, 1);
 
             
             // Write JSON data back to file
             fs.writeFileSync(filePath, JSON.stringify(serverInfo, null, 2)); // Pretty print JSON
 
             // Reply to interaction
-            interaction.reply("Role set");
+            interaction.reply("Question removed!");
         } catch (Exception) {
-            interaction.reply("Error setting channel")
+            interaction.reply("Error adding question")
             console.log(Exception)
         }
     },

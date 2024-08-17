@@ -124,7 +124,7 @@ module.exports = {
 
                 //welcomeQuestions
                 if (typeof currInfo.welcomeQuestions === 'undefined' || currInfo.welcomeQuestions === null) {
-                    var welcomeQuestions = ["What is 1+1", "Opinion on orphans?", "Tell me your favorite proof."];
+                    var welcomeQuestions = ["Prove that the square root of 2 is an irrational number, or that there are infinitely many primes.", "What is your least favorite imaginary number?", "Give an in-depth analysis about why proof by induction is a valid proof technique."];
                 } else {
                     var welcomeQuestions = currInfo.welcomeQuestions
                 }

@@ -19,7 +19,7 @@ module.exports = {
             const filePath = path.resolve(__dirname, `../../guilds/${guildId}.json`);
             console.log(channel)
 
-            // Check if time is valid
+            // Check if channel is valid
             if (!channel) {
                 return interaction.reply("Invalid role ID");
             }

@@ -19,7 +19,7 @@ module.exports = {
             const filePath = path.resolve(__dirname, `../../guilds/${guildId}.json`);
             console.log(role)
 
-            // Check if time is valid
+            // Check if role is valid
             if (!role) {
                 return interaction.reply("Invalid role ID");
             }
@@ -33,7 +33,7 @@ module.exports = {
             fs.writeFileSync(filePath, JSON.stringify(serverInfo, null, 2)); // Pretty print JSON
 
             // Reply to interaction
-            interaction.reply("Time set");
+            interaction.reply("Role set");
         } catch (Exception) {
             interaction.reply("Error setting channel")
             console.log(Exception)
