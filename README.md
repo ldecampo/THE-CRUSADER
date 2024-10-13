@@ -1,15 +1,15 @@
-# Slur-Police
-A Discord bot which pings people when a slur is said, made by request.
+# THE CRUSADER
+A Discord bot which pings people when a specific word is said, made by request.  
 
 Functionality includes:
-- Pinging a role whenever someone slurs
-- Autotimeout whenever someone slurs
+- Pinging a role whenever someone says a disallowed word
+- Autotimeout whenever someone says a disallowed word
 - Creating a log of pinned messages
-- Logging whenever someone slurs
+- Logging whenever someone says a disallowed word
 - Autodeleting and logging discord invites
 - French.
 
-# Bot commands
+# Bot commands (Incomplete - will update)
 
 ### /register
 Registers the server to the bot. The bot will create a template json file in the guilds folder specifically for the server, allowing custom settings for each server the bot is in.
