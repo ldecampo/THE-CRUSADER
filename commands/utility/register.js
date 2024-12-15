@@ -11,9 +11,11 @@ module.exports = {
 
         fs.access(filePath, fs.constants.F_OK, (err) => {
             if (err) {
-                var examplePins = [1, 2, 3]
-                var blacklistedChannels = [] 
-                var exampleQuestions = ["Prove that the square root of 2 is an irrational number, or that there are infinitely many primes.", "What is your least favorite imaginary number?", "Give an in-depth analysis about why proof by induction is a valid proof technique."]
+                var examplePins = [1, 2, 3];
+                var blacklistedChannels = [];
+                var exampleSlurs = ["instancetest6541691351398451561"];
+                var sillySlurs = ["french"];
+                var exampleQuestions = ["Prove that the square root of 2 is an irrational number, or that there are infinitely many primes.", "What is your least favorite imaginary number?", "Give an in-depth analysis about why proof by induction is a valid proof technique."];
                 var jsonArray = { 
                     "guildId"  :  interaction.guild.id, 
                     "blacklistedIds" : blacklistedChannels,
@@ -28,7 +30,10 @@ module.exports = {
                     "welcomeUsers"      : false,
                     "welcomeID"     : "",
                     "welcomeSticker"    : "",
+                    "allowLoopedLists"  : false,
                     "countingID"    : "",
+                    "slurList"      : exampleSlurs,
+                    "sillySlurList" : sillySlurs,
                     "welcomeQuestions"  : exampleQuestions,
                     "pins"      : examplePins,
                     }

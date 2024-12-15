@@ -4,10 +4,11 @@ const path = require('node:path');
 
 
 const { Client, Events, Collection, GatewayIntentBits, ActivityType } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { token } = require('./config.json');
 
 let secrets = require('./config.json');
-const unsafeWords = require('./slurs.json');
+const unsafeWords = require('./tests.json');
 
 // Create a new client instance
 const client = new Client({
@@ -47,13 +48,60 @@ for (const folder of commandFolders) {
 // When the client is ready, run this code (only once).
 // The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
 // It makes some properties non-nullable.
-client.once(Events.ClientReady, readyClient => {
+client.once(Events.ClientReady, async readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     client.user.setPresence({
         activities: [{ name: `im probably working fine`, type: ActivityType.Custom }],
         status: 'online',
     });
+    
+    while (true) {
+        let master = JSON.parse(fs.readFileSync("./lists/master.json", 'utf8'));
+        let info;
+        let guildId;
+        for (let i = 0; i < master.listInfo.length; i++) {
+            if (master.listInfo[i].isLooping) {
+                console.log('List info:', master.listInfo[i]);
+                console.log('Guild ID:', master.listInfo[i].loopingGuild);
 
+                //Make sure we have a string for the guild ID
+                guildId = String(master.listInfo[i].loopingGuild);
+                info = JSON.parse(fs.readFileSync(`./guilds/${guildId}.json`, 'utf8'));
+
+                
+                if ((info.allowLoopedLists) === true) {
+                    try {
+                        const channel = await client.channels.fetch(master.listInfo[i].loopingChannel);
+                        const listPath = path.resolve(__dirname, `./lists/${master.listInfo[i].id}_${master.listInfo[i].owner}.json`);
+                        const listItems = JSON.parse(fs.readFileSync(listPath, 'utf8'));
+                        
+                        let endingString = "";
+                        if (!listItems.items || listItems.items.length === 0) {
+                            endingString = "No entries yet";
+                        } else {
+                            for (let j = 0; j < listItems.items.length; j++) {
+                                endingString += `\`${j}.\` ${listItems.items[j]}\n`;
+                            }
+                        }
+                        
+                        const owner = await channel.guild.members.fetch(master.listInfo[i].owner);
+                        const embed = new EmbedBuilder()
+                            .setColor('8C6E0F')
+                            .setTitle(master.listInfo[i].name)
+                            .setDescription(`By ${owner.displayName}`)
+                            .addFields({ name: 'Entries:', value: endingString });
+                        
+                        await channel.send({ embeds: [embed] });
+                    } catch (error) {
+                        console.error('Error in loop:', error);
+                    }
+                }
+            }
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 3600000));
+        console.log("Looping once more...");
+    }
 });
 
 //Handle slash commands
@@ -141,10 +189,7 @@ client.on('channelPinsUpdate', async function (channel, time) {
 client.on("messageCreate", async (message) => {
 
     try {
-        let info;
-        if (message.author != 1095366459191984198) {
-            info = require("./guilds/" + message.guildId + ".json");
-        }
+        let info = require("./guilds/" + message.guildId + ".json");
         let grantFull = true;
 
         //antE
@@ -212,83 +257,87 @@ client.on("messageCreate", async (message) => {
         }
 
         //Check for test words
-        for (let word of unsafeWords.test) {
-            if (message.author == 1095366459191984198) {
-                break;
-            }
-            if (message.content.toLowerCase().includes(word)) {
-                message.reply('Successful test.', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
-                console.log("Message heard.");
+        if (message.author != 1095366459191984198) {
+            for (let word of unsafeWords.test) {
+                if (message.content.toLowerCase().includes(word)) {
+                    message.reply('Successful test.', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
+                    console.log("Message heard.");
+                }
             }
         }
 
         //Check for slurs words
-        for (let word of unsafeWords.slurs) {
-            if (message.author == 1095366459191984198) {
-                break;
-            }
-            if (message.content.toLowerCase().includes(word)) {
-                grantFull = false;
-                message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&' + info.knightRoleID + '> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
-                //Attempt timeout
-                message.guild.members.fetch(message.author)
-                    .then(member => {
-                        // Use the guild member timeout method
-                        member.timeout(info.timeoutTime, 'Slur Detected')
-                            .then(() => {
-                                const replace = '@everyone'
+        if (message.author != 1095366459191984198) {
+            for (let word of info.slurList) {
+                if (message.content.toLowerCase().includes(word)) {
+                    grantFull = false;
+                    console.log(info.knightRoleID);
+                    message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&' + info.knightRoleID + '> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
+                    
+                    //Send log
+                    const replace = '@everyone'
+                    const log = message.content.replace(/@everyone/g, '@.everyone')
 
-                                const log = message.content.replace(/@everyone/g, '@.everyone')
-                                console.log('Timed user out.');
-                                client.channels.fetch(info.logID).then(channel => {
-                                    channel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to slur at " + message.url + "\n Message content: \"" + log + "\"");
-                                })
-                            })
-                            .catch(console.error);
+                    client.channels.fetch(info.logID).then(channel => {
+                        channel.send(">>> " + "Attempting to time out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to slur at " + message.url + "\n Message content: \"" + log + "\"");
                     })
-                    .catch(console.error);
+                    //Attempt timeout
+                    message.guild.members.fetch(message.author)
+                        .then(member => {
+                            // Use the guild member timeout method
+                            member.timeout(info.timeoutTime, 'Slur Detected')
+                                .then(() => {
+                                    const replace = '@everyone'
+
+                                    const log = message.content.replace(/@everyone/g, '@.everyone')
+                                    console.log('Timed user out.');
+                                    client.channels.fetch(info.logID).then(channel => {
+                                        channel.send("Success.");
+                                    })
+                                })
+                                .catch(console.error);
+                        })
+                        .catch(console.error);
+                }
             }
         }
 
         //Check for timeouttest words
-        for (let word of unsafeWords.timeOutTest) {
-            if (message.author == 1095366459191984198) {
-                break;
-            }
-            if (message.content.toLowerCase().includes(word)) {
-                message.reply('Successful test, attempting timeout...', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
-                //Attempt timeout
-                message.guild.members.fetch(message.author)
-                    .then(member => {
-                        // Use the guild member timeout method
-                        member.timeout(info.timeoutTime, 'Slur Detected')
-                            .then(() => {
-                                const replace = '@everyone'
+        if (message.author != 1095366459191984198) {
+            for (let word of unsafeWords.timeOutTest) {
+                if (message.content.toLowerCase().includes(word)) {
+                    message.reply('Successful test, attempting timeout...', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
+                    //Attempt timeout
+                    message.guild.members.fetch(message.author)
+                        .then(member => {
+                            // Use the guild member timeout method
+                            member.timeout(info.timeoutTime, 'Slur Detected')
+                                .then(() => {
+                                    const replace = '@everyone'
 
-                                const log = message.content.replace(/@everyone/g, '@.everyone')
-                                console.log('Timed user out.');
-                                client.channels.fetch(info.logID).then(channel => {
-                                    channel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to test at " + message.url + "\n Message content: \"" + log + "\"");
+                                    const log = message.content.replace(/@everyone/g, '@.everyone')
+                                    console.log('Timed user out.');
+                                    client.channels.fetch(info.logID).then(channel => {
+                                        channel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to test at " + message.url + "\n Message content: \"" + log + "\"");
+                                    })
                                 })
-                            })
-                            .catch(console.error);
-                    })
-                    .catch(console.error);
+                                .catch(console.error);
+                        })
+                        .catch(console.error);
 
+                }
             }
-
         }
 
-        //Check for french words
-        for (let word of unsafeWords.french) {
-            if (message.author == 1095366459191984198) {
-                break;
-            }
-            if (message.content.toLowerCase().includes(word)) {
-                grantFull = false;
-                let rand = Math.floor(Math.random() * 10);
-                if (rand == 3) {
-                    message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n KNIGHTS ENGAGE', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
+        //Check for silly words
+        if (message.author != 1095366459191984198) {
+            for (let word of info.sillySlurList) {
+                if (message.content.toLowerCase().includes(word)) {
+                    grantFull = false;
+                    let rand = Math.floor(Math.random() * 10);
+                    if (rand == 3) {
+                        message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n KNIGHTS ENGAGE', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
+                    }
                 }
             }
         }
