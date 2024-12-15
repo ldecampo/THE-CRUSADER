@@ -56,7 +56,8 @@ client.once(Events.ClientReady, async readyClient => {
     });
     
     while (true) {
-        let master = JSON.parse(fs.readFileSync("./lists/master.json", 'utf8'));
+        const masterPath = path.resolve(__dirname, `./lists/master.json`)
+        let master = JSON.parse(fs.readFileSync(masterPath, 'utf8'));
         let info;
         let guildId;
         for (let i = 0; i < master.listInfo.length; i++) {
@@ -83,6 +84,19 @@ client.once(Events.ClientReady, async readyClient => {
                                 endingString += `\`${j}.\` ${listItems.items[j]}\n`;
                             }
                         }
+
+                        try {
+                            let oldMessageID = master.listInfo[i].lastLoop;
+                            if (oldMessageID && oldMessageID !== '0') {
+                                const oldMessage = await channel.messages.fetch(oldMessageID);
+                                if (oldMessage) {
+                                    await oldMessage.delete();
+                                    console.log("Successfully deleted previous message");
+                                }
+                            }
+                        } catch (e) {
+                            console.log("Failed to delete previous message:", e.message);
+                        }
                         
                         const owner = await channel.guild.members.fetch(master.listInfo[i].owner);
                         const embed = new EmbedBuilder()
@@ -90,8 +104,10 @@ client.once(Events.ClientReady, async readyClient => {
                             .setTitle(master.listInfo[i].name)
                             .setDescription(`By ${owner.displayName}`)
                             .addFields({ name: 'Entries:', value: endingString });
-                        
-                        await channel.send({ embeds: [embed] });
+                        const message = await channel.send({ embeds: [embed] });
+                        master.listInfo[i].lastLoop = message.id;
+                        fs.writeFileSync(masterPath, JSON.stringify(master, null, 2));
+
                     } catch (error) {
                         console.error('Error in loop:', error);
                     }
