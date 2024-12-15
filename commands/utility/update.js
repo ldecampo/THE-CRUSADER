@@ -51,7 +51,7 @@ module.exports = {
 
                 //roleID -> knightRoleID 
                 if (!(typeof currInfo.knightRoleID === 'undefined' || currInfo.knightRoleID === null)) {
-                    var knightRoleID = knightRoleID
+                    var knightRoleID = currInfo.knightRoleID
                 }
                 else if (typeof currInfo.roleID === 'undefined' || currInfo.roleID === null) {
                     var knightRoleID = "";
@@ -128,6 +128,27 @@ module.exports = {
                 } else {
                     var welcomeQuestions = currInfo.welcomeQuestions
                 }
+
+                //loopedLists
+                if (typeof currInfo.allowLoopedLists === 'undefined' || currInfo.allowLoopedLists === null) {
+                    var loopedLists = false;
+                } else {
+                    var loopedLists = currInfo.loopedLists;
+                }
+
+                //exampleSlurs
+                if (typeof currInfo.exampleSlurs == 'undefined' || currInfo.exampleSlurs === null) {
+                    var exampleSlurs = ["instancetest6541691351398451561"];
+                } else {
+                    var exampleSlurs = currInfo.exampleSlurs;
+                }
+
+                //sillySlurs
+                if (typeof currInfo.sillySlurList == 'undefined' || currInfo.sillySlurList === null) {
+                    var sillySlurs = ["french"];
+                } else {
+                    var sillySlurs = currInfo.sillySlurList;
+                }
                 
                 //pins
                 if (typeof currInfo.pins === 'undefined' || currInfo.pins === null) {
@@ -150,7 +171,10 @@ module.exports = {
                     "welcomeUsers"      : welcomeUsers,
                     "welcomeID"     : welcomeID,
                     "welcomeSticker"    : welcomeSticker,
+                    "allowLoopedLists"  : loopedLists,
                     "countingID"    : countingID,
+                    "slurList"      : exampleSlurs,
+                    "sillySlurList" : sillySlurs,
                     "welcomeQuestions"      : welcomeQuestions,
                     "pins"      : examplePins,
                     }
