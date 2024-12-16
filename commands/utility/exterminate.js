@@ -28,7 +28,7 @@ module.exports = {
             }
 
             // Send initial messages
-            await interaction.editReply("EXTERMINATE");
+            await interaction.editReply("**EXTERMINATE**");
             
             // Send messages in sequence
             const messages = [];
