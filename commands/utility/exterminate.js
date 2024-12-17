@@ -62,22 +62,16 @@ module.exports = {
             // Delete the webhook
             await webhook.delete();
 
-            // Find and add the role correctly
-            const role = await interaction.guild.roles.cache.find(r => r.name === 'EXTERMINATED');
-            
-            if (!role) {
-                console.error('EXTERMINATED role not found');
-                return;
-            }
 
-            await targetMember.roles.add(role.id);
+            
+            interaction.channel.permissionOverwrites.create(targetMember, { ViewChannel: false });
 
             // Remove role after 15 minutes
             setTimeout(async () => {
                 try {
-                    await targetMember.roles.remove(role.id);
+                    await interaction.channel.permissionOverwrites.create(targetMember, { ViewChannel: true });;
                 } catch (error) {
-                    console.error('Failed to remove role:', error);
+                    console.error('Failed re-add permissions:', error);
                 }
             }, 15 * 60 * 1000);
 

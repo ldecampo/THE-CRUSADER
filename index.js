@@ -54,7 +54,7 @@ client.once(Events.ClientReady, async readyClient => {
         activities: [{ name: `im probably working fine`, type: ActivityType.Custom }],
         status: 'online',
     });
-    
+
     while (true) {
         const masterPath = path.resolve(__dirname, `./lists/master.json`)
         let master = JSON.parse(fs.readFileSync(masterPath, 'utf8'));
@@ -69,13 +69,13 @@ client.once(Events.ClientReady, async readyClient => {
                 guildId = String(master.listInfo[i].loopingGuild);
                 info = JSON.parse(fs.readFileSync(`./guilds/${guildId}.json`, 'utf8'));
 
-                
+
                 if ((info.allowLoopedLists) === true) {
                     try {
                         const channel = await client.channels.fetch(master.listInfo[i].loopingChannel);
                         const listPath = path.resolve(__dirname, `./lists/${master.listInfo[i].id}_${master.listInfo[i].owner}.json`);
                         const listItems = JSON.parse(fs.readFileSync(listPath, 'utf8'));
-                        
+
                         let endingString = "";
                         if (!listItems.items || listItems.items.length === 0) {
                             endingString = "No entries yet";
@@ -97,7 +97,7 @@ client.once(Events.ClientReady, async readyClient => {
                         } catch (e) {
                             console.log("Failed to delete previous message:", e.message);
                         }
-                        
+
                         const owner = await channel.guild.members.fetch(master.listInfo[i].owner);
                         const embed = new EmbedBuilder()
                             .setColor('8C6E0F')
@@ -114,7 +114,7 @@ client.once(Events.ClientReady, async readyClient => {
                 }
             }
         }
-        
+
         await new Promise(resolve => setTimeout(resolve, 3600000));
         console.log("Looping once more...");
     }
@@ -205,8 +205,10 @@ client.on('channelPinsUpdate', async function (channel, time) {
 client.on("messageCreate", async (message) => {
 
     try {
-        let info = require("./guilds/" + message.guildId + ".json");
+        const infoPath = path.resolve(__dirname, `./guilds/${message.guildId}.json`);
+        let info = JSON.parse(fs.readFileSync(infoPath, 'utf8'));
         let grantFull = true;
+
 
         //antE
         if (message.content.toLowerCase().includes("e") && message.author != 1095366459191984198) {
@@ -289,7 +291,7 @@ client.on("messageCreate", async (message) => {
                     grantFull = false;
                     console.log(info.knightRoleID);
                     message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&' + info.knightRoleID + '> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
-                    
+
                     //Send log
                     const replace = '@everyone'
                     const log = message.content.replace(/@everyone/g, '@.everyone')
@@ -367,14 +369,14 @@ client.on("messageCreate", async (message) => {
         if (grantFull && info.welcomeUsers && message.content !== "") {
 
             let defaultRole = message.guild.roles.cache.get(info.userRoleID);
-        
+
             if (!message.member.roles.cache.has(defaultRole.id)) {
                 message.member.roles.add(defaultRole).catch(console.error); // Use message.member.roles.add instead of message.author.add
                 message.reply('Congratulations! You have solved an impossible puzzle, and thus will be allowed to see all that our glorious kingdom has to offer. Behold, a new citizen has joined the kingdom!')
                 client.channels.fetch(info.logID).then(channel => {
                     channel.send(">>> " + "Gave user <@" + message.author + "> default user role due to verification at " + message.url + "\n Message content: \"" + message.content + "\"");
                 })
-            .catch(console.error);
+                    .catch(console.error);
             }
         }
 
@@ -411,7 +413,7 @@ client.on('guildMemberAdd', member => {
                 let questionList = info.welcomeQuestions
 
                 const getRandomQuestion = (max) => questionList[Math.floor(Math.random() * max)];
-            
+
                 let question1 = getRandomQuestion(questionList.length);
                 let question2 = getRandomQuestion(questionList.length);
                 let question3 = getRandomQuestion(questionList.length);
@@ -437,7 +439,7 @@ client.on('guildMemberAdd', member => {
         });
     }
 
-}); 
+});
 
 
 
