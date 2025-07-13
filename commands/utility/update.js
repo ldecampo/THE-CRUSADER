@@ -136,6 +136,35 @@ module.exports = {
                     var loopedLists = currInfo.loopedLists;
                 }
 
+
+                //allowQOTD
+                if (typeof currInfo.allowQOTD === 'undefined' || currInfo.allowQOTD === null) {
+                    var allowQOTD = false;
+                } else {
+                    var allowQOTD = currInfo.allowQOTD;
+                }
+
+                //QOTDchannel
+                if (typeof currInfo.questionChannel === 'undefined' || currInfo.questionChannel === null) {
+                    var questionChannel = "";
+                } else {
+                    var questionChannel = currInfo.questionChannel;
+                }
+
+                //questionsArray
+                if (typeof currInfo.questionsArray === 'undefined' || currInfo.questionsArray === null) {
+                    var questionsArray = [];
+                } else {
+                    var questionsArray = currInfo.questionsArray;
+                }
+
+                //questionAuthors
+                if (typeof currInfo.questionAuthors === 'undefined' || currInfo.questionAuthors === null) {
+                    var questionAuthors = [];
+                } else {
+                    var questionAuthors = currInfo.questionAuthors;
+                }
+
                 //exampleSlurs
                 if (typeof currInfo.exampleSlurs == 'undefined' || currInfo.exampleSlurs === null) {
                     var exampleSlurs = ["instancetest6541691351398451561"];
@@ -172,10 +201,14 @@ module.exports = {
                     "welcomeID"     : welcomeID,
                     "welcomeSticker"    : welcomeSticker,
                     "allowLoopedLists"  : loopedLists,
+                    "allowQOTD"         : allowQOTD,
+                    "questionChannel"   : questionChannel,
                     "countingID"    : countingID,
                     "slurList"      : exampleSlurs,
                     "sillySlurList" : sillySlurs,
                     "welcomeQuestions"      : welcomeQuestions,
+                    "questionsArray"        : questionsArray,
+                    "questionAuthors"       : questionAuthors,
                     "pins"      : examplePins,
                     }
                 

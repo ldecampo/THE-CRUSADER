@@ -3,3 +3,5 @@ config.json
 slurs.json
 /guilds
 /guilds/*
+/lists
+/lists/*

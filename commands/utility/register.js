@@ -31,10 +31,14 @@ module.exports = {
                     "welcomeID"     : "",
                     "welcomeSticker"    : "",
                     "allowLoopedLists"  : false,
+                    "allowQOTD"     : false,
+                    "questionChannel"        : "",
                     "countingID"    : "",
                     "slurList"      : exampleSlurs,
                     "sillySlurList" : sillySlurs,
                     "welcomeQuestions"  : exampleQuestions,
+                    "questionsArray"    : [],
+                    "questionAuthors"   : [],
                     "pins"      : examplePins,
                     }
                 

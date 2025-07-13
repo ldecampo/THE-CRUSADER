@@ -2,13 +2,34 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-
 const { Client, Events, Collection, GatewayIntentBits, ActivityType } = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
 const { token } = require('./config.json');
 
 let secrets = require('./config.json');
 const unsafeWords = require('./tests.json');
+const { info } = require('node:console');
+
+// Helper function to safely fetch channels
+async function safeChannelFetch(client, channelId, context = 'unknown') {
+    try {
+        if (!channelId) {
+            console.log(`[WARNING] No channel ID provided for context: ${context}`);
+            return null;
+        }
+        
+        const channel = await client.channels.fetch(channelId);
+        if (!channel) {
+            console.log(`[WARNING] Channel ${channelId} not found for context: ${context}`);
+            return null;
+        }
+        
+        return channel;
+    } catch (error) {
+        console.error(`[ERROR] Failed to fetch channel ${channelId} for context: ${context}`, error.message);
+        return null;
+    }
+}
 
 // Create a new client instance
 const client = new Client({
@@ -20,7 +41,7 @@ const client = new Client({
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.GuildMembers
     ],
-    partials: ['CHANNEL'] // Required to receive DMs
+    partials: ['CHANNEL']
 });
 
 client.commands = new Collection();
@@ -34,7 +55,6 @@ for (const folder of commandFolders) {
     for (const file of commandFiles) {
         const filePath = path.join(commandsPath, file);
         const command = require(filePath);
-        // Set a new item in the Collection with the key as the command name and the value as the exported module
         if ('data' in command && 'execute' in command) {
             client.commands.set(command.data.name, command);
         } else {
@@ -43,68 +63,127 @@ for (const folder of commandFolders) {
     }
 }
 
-
-
-// When the client is ready, run this code (only once).
-// The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
-// It makes some properties non-nullable.
 client.once(Events.ClientReady, async readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     client.user.setPresence({
         activities: [{ name: `im probably working fine`, type: ActivityType.Custom }],
         status: 'online',
     });
-    
+
     while (true) {
-        let master = JSON.parse(fs.readFileSync("./lists/master.json", 'utf8'));
-        let info;
-        let guildId;
-        for (let i = 0; i < master.listInfo.length; i++) {
-            if (master.listInfo[i].isLooping) {
-                console.log('List info:', master.listInfo[i]);
-                console.log('Guild ID:', master.listInfo[i].loopingGuild);
+        try {
+            let master = JSON.parse(fs.readFileSync("./lists/master.json", 'utf8'));
+            let info;
+            let guildId;
+            
+            for (let i = 0; i < master.listInfo.length; i++) {
+                if (master.listInfo[i].isLooping) {
+                    console.log('List info:', master.listInfo[i]);
+                    console.log('Guild ID:', master.listInfo[i].loopingGuild);
 
-                //Make sure we have a string for the guild ID
-                guildId = String(master.listInfo[i].loopingGuild);
-                info = JSON.parse(fs.readFileSync(`./guilds/${guildId}.json`, 'utf8'));
-
-                
-                if ((info.allowLoopedLists) === true) {
+                    guildId = String(master.listInfo[i].loopingGuild);
+                    
                     try {
-                        const channel = await client.channels.fetch(master.listInfo[i].loopingChannel);
-                        const listPath = path.resolve(__dirname, `./lists/${master.listInfo[i].id}_${master.listInfo[i].owner}.json`);
-                        const listItems = JSON.parse(fs.readFileSync(listPath, 'utf8'));
-                        
-                        let endingString = "";
-                        if (!listItems.items || listItems.items.length === 0) {
-                            endingString = "No entries yet";
-                        } else {
-                            for (let j = 0; j < listItems.items.length; j++) {
-                                endingString += `\`${j}.\` ${listItems.items[j]}\n`;
-                            }
+                        info = JSON.parse(fs.readFileSync(`./guilds/${guildId}.json`, 'utf8'));
+                    } catch (fileError) {
+                        console.error(`[ERROR] Failed to read guild config for ${guildId}:`, fileError.message);
+                        continue;
+                    }
+                    
+                    if (info.allowLoopedLists === true) {
+                        const channel = await safeChannelFetch(client, master.listInfo[i].loopingChannel, 'looped list');
+                        if (!channel) {
+                            console.log(`[WARNING] Skipping looped list ${master.listInfo[i].id} - channel not accessible`);
+                            continue;
                         }
                         
-                        const owner = await channel.guild.members.fetch(master.listInfo[i].owner);
-                        const embed = new EmbedBuilder()
-                            .setColor('8C6E0F')
-                            .setTitle(master.listInfo[i].name)
-                            .setDescription(`By ${owner.displayName}`)
-                            .addFields({ name: 'Entries:', value: endingString });
-                        
-                        await channel.send({ embeds: [embed] });
-                    } catch (error) {
-                        console.error('Error in loop:', error);
+                        try {
+                            const listPath = path.resolve(__dirname, `./lists/${master.listInfo[i].id}_${master.listInfo[i].owner}.json`);
+                            const listItems = JSON.parse(fs.readFileSync(listPath, 'utf8'));
+                            
+                            let endingString = "";
+                            if (!listItems.items || listItems.items.length === 0) {
+                                endingString = "No entries yet";
+                            } else {
+                                for (let j = 0; j < listItems.items.length; j++) {
+                                    endingString += `\`${j}.\` ${listItems.items[j]}\n`;
+                                }
+                            }
+                            
+                            const owner = await channel.guild.members.fetch(master.listInfo[i].owner);
+                            const embed = new EmbedBuilder()
+                                .setColor('8C6E0F')
+                                .setTitle(master.listInfo[i].name)
+                                .setDescription(`By ${owner.displayName}`)
+                                .addFields({ name: 'Entries:', value: endingString });
+                            
+                            await channel.send({ embeds: [embed] });
+                        } catch (error) {
+                            console.error(`[ERROR] Error processing looped list ${master.listInfo[i].id}:`, error.message);
+                        }
                     }
+
+
+
                 }
             }
+        } catch (error) {
+            console.error('[ERROR] Error in main loop:', error.message);
         }
-        
+        const guildFolder = './guilds/';
+        fs.readdir(guildFolder, (err, files) => {
+            files.forEach(async infoFile => {
+                console.log(infoFile);
+
+                const filePath = path.join(guildFolder, infoFile);
+
+                try {
+                    const data = fs.readFileSync(filePath, 'utf8');
+                    let info = JSON.parse(data);
+
+                    console.log(info.allowQOTD);
+                    if (info.allowQOTD === true && info.questionChannel != "") {
+                            try {
+                                if (info.questionsArray.length == 0) {
+                                    const questionChannel = await safeChannelFetch(client, info.questionChannel, 'QOTD');
+                                    await questionChannel.send("I have no questions! Add some with `/addqotd`.");
+                                } else {
+                                    let questionIndex = Math.floor(Math.random() * info.questionsArray.length);
+                                    console.log(questionIndex);
+                                    let question = info.questionsArray[questionIndex];
+                                    let questionAuthorID = info.questionAuthors[questionIndex];
+                                    const author = await client.users.fetch(questionAuthorID);
+                                    const authorName = author.displayName;
+                                    const questionChannel = await safeChannelFetch(client, info.questionChannel, 'QOTD');
+                                    const questionEmbed = new EmbedBuilder()
+                                        .setColor('8C6E0F')
+                                        .setTitle("Question Of The Day!")
+                                        .setDescription(question)
+                                        .setTimestamp()
+                                        .setFooter({ text: `Question by ${authorName}` });
+                                    
+                                    await questionChannel.send({ embeds: [questionEmbed] });
+
+                                    info.questionsArray.splice(questionIndex, 1);
+                                    info.questionAuthors.splice(questionIndex, 1);
+                                    fs.writeFileSync(filePath, JSON.stringify(info, null, 2)); // Pretty print JSON
+                                    info = null;
+                                }
+                            } catch (e) {
+                                console.error(`[ERROR] Error processing QOTD:`, e.message);
+                            }
+                        }
+                } catch (e) {
+                   console.error(`[ERROR] Error processing QOTD:`, e.message);
+                }
+            });
+        });
+
         await new Promise(resolve => setTimeout(resolve, 3600000));
         console.log("Looping once more...");
     }
 });
 
-//Handle slash commands
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
     console.log(interaction);
@@ -126,138 +205,112 @@ client.on(Events.InteractionCreate, async interaction => {
             await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
         }
     }
-
 });
-
 
 client.on('channelPinsUpdate', async function (channel, time) {
     try {
         let info = require("./guilds/" + channel.guild.id + ".json");
 
-        // Fetch pinned messages
         let messages = await channel.messages.fetchPinned();
-        let lastPinned = messages.first(); // Get the last pinned message
+        let lastPinned = messages.first();
 
-        let shouldLog = true; // Assuming you want to log new pinned messages by default
+        let shouldLog = true;
         if (info.pins.includes(lastPinned.url)) {
-            shouldLog = false; // If message ID is already in pinLog, don't log it again
+            shouldLog = false;
         }
 
         if (shouldLog) {
             info.pins.push(lastPinned.url);
-
-            // Write updated pinLog back to pins.json
             require("fs").writeFileSync("./pins.json", JSON.stringify(info));
-
 
             let messageContent = "<@" + lastPinned.author.id + ">'s message pinned! " + lastPinned.url + "\n>>> " + lastPinned.content;
 
-            client.channels.fetch(info.pinID).then(channel => {
-                channel.send(messageContent).then(() => {
+            const pinChannel = await safeChannelFetch(client, info.pinID, 'pin logging');
+            if (pinChannel) {
+                try {
+                    await pinChannel.send(messageContent);
                     console.log("Regular message sent successfully.");
 
                     // Send URLs for each attachment in a separate message
-                    Array.from(lastPinned.attachments.values()).forEach(attachment => {
-                        channel.send(attachment.url).then(() => {
+                    for (const attachment of lastPinned.attachments.values()) {
+                        try {
+                            await pinChannel.send(attachment.url);
                             console.log("Attachment URL sent successfully.");
-                        }).catch(error => {
-                            console.error("Error sending attachment URL:", error);
-                        });
-                    });
-                });
-            });
+                        } catch (error) {
+                            console.error("Error sending attachment URL:", error.message);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error sending pin message:", error.message);
+                }
+            }
         }
     } catch (error) {
-        console.log(error)
-        const fs = require('fs');
-        const time = new Date().toISOString().replace(/:/g, '-'); // Generating a timestamp in a format suitable for file name
-        const filePath = `Crash/${time}.txt`;
-        const errorString = JSON.stringify(error, null, 2); // Stringify the error object with pretty formatting
-
-        fs.writeFile(filePath, errorString, (err) => {
-            if (err) {
-                console.error('Error writing to crash file:', err);
-            } else {
-                console.log('Error logged to:', filePath);
-            }
-        });
+        console.error('[ERROR] Error in channelPinsUpdate:', error.message);
+        logError(error);
     }
 });
 
-
-
 client.on("messageCreate", async (message) => {
-
     try {
-        let info = require("./guilds/" + message.guildId + ".json");
+        if (!message.guild) return; // Skip DMs
+        
+        let info;
+        try {
+            info = require("./guilds/" + message.guild.id + ".json");
+        } catch (fileError) {
+            console.error(`[ERROR] Failed to read guild config for ${message.guild.id}:`, fileError.message);
+            return;
+        }
+        
         let grantFull = true;
 
-        //antE
-        if (message.content.toLowerCase().includes("e") && message.author != 1095366459191984198) {
+        // Anti-E mode
+        if (message.content.toLowerCase().includes("e") && message.author.id !== '1095366459191984198') {
             if (info.antEMode == true) {
                 grantFull = false;
                 message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> E DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&' + info.antERoleID + '> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
-                //Attempt timeout
-                message.guild.members.fetch(message.author)
-                    .then(member => {
-                        // Use the guild member timeout method
-                        member.timeout(info.timeoutTime, 'Slur Detected')
-                            .then(() => {
-                                const replace = '@everyone'
-
-                                const log = message.content.replace(/@everyone/g, '@.everyone')
-                                console.log('Timed user out.');
-                                client.channels.fetch(info.logID).then(channel => {
-                                    channel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to slur at " + message.url + "\n Message content: \"" + log + "\"");
-                                })
-                            })
-                            .catch(console.error);
-                    })
-                    .catch(console.error);
+                
+                try {
+                    const member = await message.guild.members.fetch(message.author);
+                    await member.timeout(info.timeoutTime, 'E Detected');
+                    console.log('Timed user out for E.');
+                    
+                    const logChannel = await safeChannelFetch(client, info.logID, 'E detection logging');
+                    if (logChannel) {
+                        const log = message.content.replace(/@everyone/g, '@.everyone');
+                        await logChannel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to E at " + message.url + "\n Message content: \"" + log + "\"");
+                    }
+                } catch (error) {
+                    console.error('Error timing out user for E:', error.message);
+                }
             }
         }
 
-        //Check if it contains a discord invite
+        // Discord invite detection
         if (message.content.includes("discord.gg")) {
-            console.log("<" + message.content + ">")
-            if (message.author != 1095366459191984198) {
+            if (message.author.id !== '1095366459191984198') {
                 grantFull = false;
-                const log1 = message.content.replace(/@everyone/g, '@.everyone')
-                const log = log1.replace(/testString2345/g, '@.everyone')
-                const author = message.author
-                const id = message.id
+                const log = message.content.replace(/@everyone/g, '@.everyone');
+                const author = message.author;
+                const id = message.id;
 
                 try {
-                    // Delete the message
-
-
-                    // Send reply with message reference
-
                     await message.reply('Invite link detected, deleting...', { message_reference: { message_id: id, fail_if_not_exists: false } });
-
-                    // Log the deleted message
+                    await message.delete();
+                    
+                    const logChannel = await safeChannelFetch(client, info.logID, 'invite link logging');
+                    if (logChannel) {
+                        await logChannel.send(">>> " + "Deleted message from user <@" + author + "> due to discord invite." + "\n Message content: \"" + log + "\"");
+                    }
                 } catch (error) {
-                    // const channel = await client.channels.fetch(info.logID);
-                    // await channel.send("Error deleting message when processing invite link, attempting to log anyway...")
-                    // console.error("Error while processing invite link:", error);
-                    // await channel.send(">>> " + "Deleted message from user <@" + author + "> due to discord invite." + "\n Message content: \"" + log + "\"");
-
+                    console.error('Error handling invite link:', error.message);
                 }
-                message.delete();
-                const channel = await client.channels.fetch(info.logID);
-                channel.send(">>> " + "Deleted message from user <@" + author + "> due to discord invite." + "\n Message content: \"" + log + "\"");
-
-
-                // message.reply('Invite link detected, deleting...', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
-                // client.channels.fetch(info.logID).then(channel => {
-                //     channel.send(">>> " + "Deleted message from user <@" + message.author + "> due to discord invite." + "\n Message content: \"" + log + "\"");
-                //     })
-                // message.delete();
             }
         }
 
-        //Check for test words
-        if (message.author != 1095366459191984198) {
+        // Test words
+        if (message.author.id !== '1095366459191984198') {
             for (let word of unsafeWords.test) {
                 if (message.content.toLowerCase().includes(word)) {
                     message.reply('Successful test.', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
@@ -266,71 +319,58 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-        //Check for slurs words
-        if (message.author != 1095366459191984198) {
+        // Slur detection
+        if (message.author.id !== '1095366459191984198') {
             for (let word of info.slurList) {
                 if (message.content.toLowerCase().includes(word)) {
                     grantFull = false;
-                    console.log(info.knightRoleID);
                     message.reply('<a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> SLUR DETECTED <a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167><a:alert:1095711502683611167> \n <@&' + info.knightRoleID + '> ENGAGE \n TIMING OUT MEMBER FOR 10 MINUTES', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
                     
-                    //Send log
-                    const replace = '@everyone'
-                    const log = message.content.replace(/@everyone/g, '@.everyone')
-
-                    client.channels.fetch(info.logID).then(channel => {
-                        channel.send(">>> " + "Attempting to time out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to slur at " + message.url + "\n Message content: \"" + log + "\"");
-                    })
-                    //Attempt timeout
-                    message.guild.members.fetch(message.author)
-                        .then(member => {
-                            // Use the guild member timeout method
-                            member.timeout(info.timeoutTime, 'Slur Detected')
-                                .then(() => {
-                                    const replace = '@everyone'
-
-                                    const log = message.content.replace(/@everyone/g, '@.everyone')
-                                    console.log('Timed user out.');
-                                    client.channels.fetch(info.logID).then(channel => {
-                                        channel.send("Success.");
-                                    })
-                                })
-                                .catch(console.error);
-                        })
-                        .catch(console.error);
+                    const log = message.content.replace(/@everyone/g, '@.everyone');
+                    const logChannel = await safeChannelFetch(client, info.logID, 'slur detection logging');
+                    if (logChannel) {
+                        await logChannel.send(">>> " + "Attempting to time out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to slur at " + message.url + "\n Message content: \"" + log + "\"");
+                    }
+                    
+                    try {
+                        const member = await message.guild.members.fetch(message.author);
+                        await member.timeout(info.timeoutTime, 'Slur Detected');
+                        console.log('Timed user out for slur.');
+                        if (logChannel) {
+                            await logChannel.send("Success.");
+                        }
+                    } catch (error) {
+                        console.error('Error timing out user for slur:', error.message);
+                    }
                 }
             }
         }
 
-        //Check for timeouttest words
-        if (message.author != 1095366459191984198) {
+        // Timeout test
+        if (message.author.id !== '1095366459191984198') {
             for (let word of unsafeWords.timeOutTest) {
                 if (message.content.toLowerCase().includes(word)) {
                     message.reply('Successful test, attempting timeout...', { message_reference: { message_id: message.id, fail_if_not_exists: false } });
-                    //Attempt timeout
-                    message.guild.members.fetch(message.author)
-                        .then(member => {
-                            // Use the guild member timeout method
-                            member.timeout(info.timeoutTime, 'Slur Detected')
-                                .then(() => {
-                                    const replace = '@everyone'
-
-                                    const log = message.content.replace(/@everyone/g, '@.everyone')
-                                    console.log('Timed user out.');
-                                    client.channels.fetch(info.logID).then(channel => {
-                                        channel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to test at " + message.url + "\n Message content: \"" + log + "\"");
-                                    })
-                                })
-                                .catch(console.error);
-                        })
-                        .catch(console.error);
-
+                    
+                    try {
+                        const member = await message.guild.members.fetch(message.author);
+                        await member.timeout(info.timeoutTime, 'Timeout Test');
+                        console.log('Timed user out for test.');
+                        
+                        const logChannel = await safeChannelFetch(client, info.logID, 'timeout test logging');
+                        if (logChannel) {
+                            const log = message.content.replace(/@everyone/g, '@.everyone');
+                            await logChannel.send(">>> " + "Timed out user <@" + message.author + "> for " + info.timeoutTime + " milliseconds due to test at " + message.url + "\n Message content: \"" + log + "\"");
+                        }
+                    } catch (error) {
+                        console.error('Error timing out user for test:', error.message);
+                    }
                 }
             }
         }
 
-        //Check for silly words
-        if (message.author != 1095366459191984198) {
+        // Silly words
+        if (message.author.id !== '1095366459191984198') {
             for (let word of info.sillySlurList) {
                 if (message.content.toLowerCase().includes(word)) {
                     grantFull = false;
@@ -342,75 +382,88 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-
+        // Random approval message
         if ((Math.floor(Math.random() * 2674)) == 256) {
             message.reply('Message approved, thank you Citizen.');
         }
 
-        info = require("./guilds/" + message.guild.id + ".json");
+        // Welcome users
         if (grantFull && info.welcomeUsers && message.content !== "") {
-
-            let defaultRole = message.guild.roles.cache.get(info.userRoleID);
-        
-            if (!message.member.roles.cache.has(defaultRole.id)) {
-                message.member.roles.add(defaultRole).catch(console.error); // Use message.member.roles.add instead of message.author.add
-                message.reply('Congratulations! You have solved an impossible puzzle, and thus will be allowed to see all that our glorious kingdom has to offer. Behold, a new citizen has joined the kingdom!')
-                client.channels.fetch(info.logID).then(channel => {
-                    channel.send(">>> " + "Gave user <@" + message.author + "> default user role due to verification at " + message.url + "\n Message content: \"" + message.content + "\"");
-                })
-            .catch(console.error);
+            try {
+                let defaultRole = message.guild.roles.cache.get(info.userRoleID);
+                
+                if (defaultRole && !message.member.roles.cache.has(defaultRole.id)) {
+                    await message.member.roles.add(defaultRole);
+                    message.reply('Congratulations! You have solved an impossible puzzle, and thus will be allowed to see all that our glorious kingdom has to offer. Behold, a new citizen has joined the kingdom!');
+                    
+                    const logChannel = await safeChannelFetch(client, info.logID, 'user verification logging');
+                    if (logChannel) {
+                        await logChannel.send(">>> " + "Gave user <@" + message.author + "> default user role due to verification at " + message.url + "\n Message content: \"" + message.content + "\"");
+                    }
+                }
+            } catch (error) {
+                console.error('Error adding user role:', error.message);
             }
         }
 
     } catch (error) {
-        console.log(error)
-        const fs = require('fs');
-        const time = new Date().toISOString().replace(/:/g, '-'); // Generating a timestamp in a format suitable for file name
-        const filePath = `Crash/${time}.txt`;
-        const errorString = JSON.stringify(error, null, 2); // Stringify the error object with pretty formatting
-
-        fs.writeFile(filePath, errorString, (err) => {
-            if (err) {
-                console.error('Error writing to crash file:', err);
-            } else {
-                console.log('Error logged to:', filePath);
-            }
-        });
+        console.error('[ERROR] Error in messageCreate:', error.message);
+        logError(error);
     }
-
 });
 
-client.on('guildMemberAdd', member => {
+client.on('guildMemberAdd', async member => {
     console.log(`${member.user.tag} has joined the server!`);
     try {
-        let info = require("./guilds/" + member.guild.id + ".json");
+        let info;
+        try {
+            info = require("./guilds/" + member.guild.id + ".json");
+        } catch (fileError) {
+            console.error(`[ERROR] Failed to read guild config for ${member.guild.id}:`, fileError.message);
+            return;
+        }
+        
         if (info.welcomeUsers == true) {
-            let reply = {
-                stickers: client.guilds.cache.get(member.guild.id).stickers.cache.filter(s => s.id === info.welcomeSticker)
+            const welcomeChannel = await safeChannelFetch(client, info.welcomeID, 'welcome message');
+            if (!welcomeChannel) {
+                console.log(`[WARNING] Welcome channel not found for guild ${member.guild.id}`);
+                return;
             }
-
-            client.channels.fetch(info.welcomeID).then(channel => {
-                channel.send(reply);
-                channel.send("Welcome Citizen <@" + member.id + ">! If you wish to join the rest of the server, please answer one of my riddles three! (Or just like... say anything I guess, that's fine too)")
-                let questionList = info.welcomeQuestions
-
-                const getRandomQuestion = (max) => questionList[Math.floor(Math.random() * max)];
             
+            try {
+                let reply = {
+                    stickers: client.guilds.cache.get(member.guild.id).stickers.cache.filter(s => s.id === info.welcomeSticker)
+                };
+
+                await welcomeChannel.send(reply);
+                await welcomeChannel.send("Welcome Citizen <@" + member.id + ">! If you wish to join the rest of the server, please answer one of my riddles three! (Or just like... say anything I guess, that's fine too)");
+                
+                let questionList = info.welcomeQuestions;
+                const getRandomQuestion = (max) => questionList[Math.floor(Math.random() * max)];
+                
                 let question1 = getRandomQuestion(questionList.length);
                 let question2 = getRandomQuestion(questionList.length);
                 let question3 = getRandomQuestion(questionList.length);
 
-                console.log(question1 + question2 + question3)
-                channel.send(`- ${question1} \n- ${question2} \n- ${question3}`)
-            })
+                console.log(question1 + question2 + question3);
+                await welcomeChannel.send(`- ${question1} \n- ${question2} \n- ${question3}`);
+            } catch (error) {
+                console.error('Error sending welcome message:', error.message);
+            }
         }
-
     } catch (error) {
-        console.log(error)
+        console.error('[ERROR] Error in guildMemberAdd:', error.message);
+        logError(error);
+    }
+});
+
+// Error logging function
+function logError(error) {
+    try {
         const fs = require('fs');
-        const time = new Date().toISOString().replace(/:/g, '-'); // Generating a timestamp in a format suitable for file name
+        const time = new Date().toISOString().replace(/:/g, '-');
         const filePath = `Crash/${time}.txt`;
-        const errorString = JSON.stringify(error, null, 2); // Stringify the error object with pretty formatting
+        const errorString = JSON.stringify(error, null, 2);
 
         fs.writeFile(filePath, errorString, (err) => {
             if (err) {
@@ -419,12 +472,10 @@ client.on('guildMemberAdd', member => {
                 console.log('Error logged to:', filePath);
             }
         });
+    } catch (logError) {
+        console.error('Failed to log error:', logError.message);
     }
-
-}); 
-
-
-
+}
 
 // Log in to Discord with your client's token
 client.login(token).catch(console.error);
