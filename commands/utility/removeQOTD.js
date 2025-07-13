@@ -22,8 +22,8 @@ module.exports = {
                 interaction.reply("This server does not allow the QOTD. Contact an admin!");
             } else if (serverInfo.questionChannel == "") {
                 interaction.reply("This server has not set a question channel, have an admin use /setqotdchannel in the channel where the QOTD should be asked.")
-            } else if (questionIndex != -1) {
-                interaction.reply("You already asked a question! Used \removeqotd to delete it, then you may ask a new question.")
+            } else if (questionIndex == -1) {
+                interaction.reply("You haven't asked a question! Used /addquotd to add a question.")
             } else {
 
                 serverInfo.questionsArray.splice(questionIndex, 1);
