@@ -70,6 +70,7 @@ client.once(Events.ClientReady, async readyClient => {
         status: 'online',
     });
 
+    let hourLoop = 24;
 
     while (true) {
         try {
@@ -131,57 +132,62 @@ client.once(Events.ClientReady, async readyClient => {
         } catch (error) {
             console.error('[ERROR] Error in main loop:', error.message);
         }
-        const guildFolder = './guilds/';
-        fs.readdir(guildFolder, (err, files) => {
-            files.forEach(async infoFile => {
-                console.log(infoFile);
+        if (hourLoop == 24) {
+            hourLoop = 0;
+            const guildFolder = './guilds/';
+            fs.readdir(guildFolder, (err, files) => {
+                files.forEach(async infoFile => {
+                    console.log(infoFile);
 
-                const filePath = path.join(guildFolder, infoFile);
+                    const filePath = path.join(guildFolder, infoFile);
 
-                try {
-                    const data = fs.readFileSync(filePath, 'utf8');
-                    let info = JSON.parse(data);
+                    try {
+                        const data = fs.readFileSync(filePath, 'utf8');
+                        let info = JSON.parse(data);
 
-                    console.log(info.allowQOTD);
-                    if (info.allowQOTD === true && info.questionChannel != "") {
-                            try {
-                                if (info.questionsArray.length == 0) {
-                                    const questionChannel = await safeChannelFetch(client, info.questionChannel, 'QOTD');
-                                    await questionChannel.send("I have no questions! Add some with `/addqotd`.");
-                                } else {
-                                    let questionIndex = Math.floor(Math.random() * info.questionsArray.length);
-                                    console.log(questionIndex);
-                                    let question = info.questionsArray[questionIndex];
-                                    let questionAuthorID = info.questionAuthors[questionIndex];
-                                    const author = await client.users.fetch(questionAuthorID);
-                                    const authorName = author.displayName;
-                                    const questionChannel = await safeChannelFetch(client, info.questionChannel, 'QOTD');
-                                    const questionEmbed = new EmbedBuilder()
-                                        .setColor('8C6E0F')
-                                        .setTitle("Question Of The Day!")
-                                        .setDescription(question)
-                                        .setTimestamp()
-                                        .setFooter({ text: `Question by ${authorName}` });
-                                    
-                                    await questionChannel.send({ embeds: [questionEmbed] });
+                        console.log(info.allowQOTD);
+                        if (info.allowQOTD === true && info.questionChannel != "") {
+                                try {
+                                    if (info.questionsArray.length == 0) {
+                                        const questionChannel = await safeChannelFetch(client, info.questionChannel, 'QOTD');
+                                        await questionChannel.send("I have no questions! Add some with `/addqotd`.");
+                                    } else {
+                                        let questionIndex = Math.floor(Math.random() * info.questionsArray.length);
+                                        console.log(questionIndex);
+                                        let question = info.questionsArray[questionIndex];
+                                        let questionAuthorID = info.questionAuthors[questionIndex];
+                                        const author = await client.users.fetch(questionAuthorID);
+                                        const authorName = author.displayName;
+                                        const questionChannel = await safeChannelFetch(client, info.questionChannel, 'QOTD');
+                                        const questionEmbed = new EmbedBuilder()
+                                            .setColor('8C6E0F')
+                                            .setTitle("Question Of The Day!")
+                                            .setDescription(question)
+                                            .setTimestamp()
+                                            .setFooter({ text: `Question by ${authorName}` });
+                                        
+                                        await questionChannel.send({ embeds: [questionEmbed] });
 
-                                    info.questionsArray.splice(questionIndex, 1);
-                                    info.questionAuthors.splice(questionIndex, 1);
-                                    fs.writeFileSync(filePath, JSON.stringify(info, null, 2)); // Pretty print JSON
-                                    info = null;
+                                        info.questionsArray.splice(questionIndex, 1);
+                                        info.questionAuthors.splice(questionIndex, 1);
+                                        fs.writeFileSync(filePath, JSON.stringify(info, null, 2)); // Pretty print JSON
+                                        info = null;
+                                    }
+                                } catch (e) {
+                                    console.error(`[ERROR] Error processing QOTD:`, e.message);
                                 }
-                            } catch (e) {
-                                console.error(`[ERROR] Error processing QOTD:`, e.message);
                             }
-                        }
-                } catch (e) {
-                   console.error(`[ERROR] Error processing QOTD:`, e.message);
-                }
+                    } catch (e) {
+                    console.error(`[ERROR] Error processing QOTD:`, e.message);
+                    }
+                });
             });
-        });
+        }
 
         await new Promise(resolve => setTimeout(resolve, 3600000));
         console.log("Looping once more...");
+        hourLoop++;
+        console.log("Hour number " + hourLoop);
     }
 });
 
