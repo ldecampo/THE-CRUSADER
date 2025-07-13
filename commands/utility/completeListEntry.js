@@ -6,7 +6,6 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('completelistentry')
 		.setDescription('Cross something off your list')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
 		.addIntegerOption(option =>
 			option.setName('id')
                 .setDescription('The ID of the list')
@@ -21,9 +20,9 @@ module.exports = {
 
         const id = interaction.options.getInteger('id');
         if (id != master.listInfo[id].id) {
-            return interaction.reply("Critical error - contact developer @kenorbs immediately.");
             console.log(id);
             console.log(master.listInfo[id].id);
+            return interaction.reply("Critical error - contact developer @kenorbs immediately.");
         }
 
         if (interaction.member.id != master.listInfo[id].owner) {
@@ -45,6 +44,7 @@ module.exports = {
             const listItems = require(listPath);
 
             listItems.items[entrynum] = "~~" + listItems.items[entrynum] + "~~";
+            console.log(listItems.items[entrynum]);
 
             // Write JSON data back to file
             fs.writeFileSync(listPath, JSON.stringify(listItems, null, 2)); // Pretty print JSON

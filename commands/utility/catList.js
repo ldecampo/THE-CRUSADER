@@ -8,7 +8,6 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('catlist')
 		.setDescription('View your list')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
 		.addIntegerOption(option =>
 			option.setName('id')
                 .setDescription('The ID of the list')

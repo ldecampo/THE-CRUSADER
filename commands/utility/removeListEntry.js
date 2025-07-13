@@ -6,7 +6,6 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('removelistentry')
 		.setDescription('Remove something off your list')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
 		.addIntegerOption(option =>
 			option.setName('id')
                 .setDescription('The ID of the list')

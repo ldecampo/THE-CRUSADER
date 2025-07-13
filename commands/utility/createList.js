@@ -6,7 +6,6 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('createlist')
 		.setDescription('Creates a new list that can be used for listing things (you know what a list is)')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
 		.addStringOption(option =>
 			option.setName('name')
 				.setDescription('The name of your list.')
@@ -34,6 +33,7 @@ module.exports = {
                 name: name, 
                 owner: interaction.member.id,
                 isLooping: false,
+                lastLoop: 0,
                 loopingGuild : 0,
                 loopingChannel : 0
             };

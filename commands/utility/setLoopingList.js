@@ -6,7 +6,6 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('setloopinglist')
 		.setDescription('Set your list to loop at the current channel.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
 		.addIntegerOption(option =>
 			option.setName('id')
                 .setDescription('The ID of the list')

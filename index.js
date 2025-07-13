@@ -70,6 +70,7 @@ client.once(Events.ClientReady, async readyClient => {
         status: 'online',
     });
 
+
     while (true) {
         try {
             let master = JSON.parse(fs.readFileSync("./lists/master.json", 'utf8'));
