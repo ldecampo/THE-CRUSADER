@@ -1,6 +1,9 @@
 # THE CRUSADER
 A Discord bot which pings moderators when a banned word is said, made by request.
 
+# NOTICE:
+This documentation is outdated and will be reworked in the future. There are 45 commands and a bunch of other features, so give me some time. This is a solo project. 
+
 Functionality includes:
 - Pinging a role whenever someone says a disallowed word
 - Autotimeout whenever someone says a disallowed word (toggleable)
